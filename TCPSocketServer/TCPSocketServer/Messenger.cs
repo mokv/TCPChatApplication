@@ -8,31 +8,12 @@
     {
         public static string Read(Client client)
         {
-            byte[] buffer = new byte[1];
-            int length = 0;
-            StringBuilder strBuild = new StringBuilder();
+            byte[] buffer = new byte[10];
             client.Socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
-            string character = Encoding.UTF8.GetString(buffer);
+            string lengthString = Encoding.UTF8.GetString(buffer);
+            bool successfulParse = uint.TryParse(lengthString, out uint length);
 
-            if (character == "[")
-            {
-                while (true)
-                {
-                    client.Socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
-                    character = Encoding.UTF8.GetString(buffer);
-
-                    if (character == "]")
-                    {
-                        length = int.Parse(strBuild.ToString());
-                        break;
-                    }
-                    else
-                    {
-                        strBuild.Append(character);
-                    }
-                }
-            }
-            else
+            if (!successfulParse)
             {
                 throw new ArgumentException("Message is not in correct format!");
             }
@@ -46,7 +27,7 @@
         {
             if (!string.IsNullOrEmpty(message))
             {
-                string toSend = string.Format("[{0}]{1}", message.Length, message);
+                string toSend = string.Format("{0}{1}", message.Length.ToString("#0000000000"), message);
                 byte[] buffer = Encoding.UTF8.GetBytes(toSend);
 
                 if (client.Socket.Connected)
